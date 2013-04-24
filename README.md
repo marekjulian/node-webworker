@@ -5,6 +5,25 @@ API](http://www.whatwg.org/specs/web-workers/current-work/) for
 See the design document
 [here](http://blog.std.in/2010/07/08/nodejs-webworker-design/).
 
+### Updated / Forked Repository
+
+This is a fork of the original implementation which can be found [here](https://github.com/pgriess/node-webworker.git). The forked implementation includes the following modifications and / or enhancements:
+
+  * The code has been upgraded to run on a new version of node such as v0.8.*. This includes:
+
+    * Upgrading to new child_process modulie.
+    * The node.js [vm](http://nodejs.org/api/vm.html) module is used to launch node in the worker script in the child process as opposed to the previous script module.
+
+  * Support for websocket protocol version 13 as opposed to the 2 draft protocol versions previously supported.
+
+  * The dependency on websocket-client has been removed. Instead [WebSocket-Node](https://github.com/Worlize/WebSocket-Node.git) is leveraged which supports more recent versions of the websocket protocal. Unfortunately, the auther didn't see a quick easy way to continue to support the extension to piggyback passing of file descriptors.
+
+    * For better or worse, the  [WebSocket-Node](https://github.com/Worlize/WebSocket-Node.git) module has been forked to support connections based upon Unix Domain Sockets.
+
+The motivation for this work was the need to the ability to either spawn a sub-process or thread which would allow work to occur without interferring with the parent processes node event loop. Conceptually, the idea to provide an interface between parent and child processes based upon the WebWorkers protocal, which utilized the WebSocket protocal for transport seemed very attractive. Other implementations, such as [node-webworker-threads](https://github.com/audreyt/node-webworker-threads) were explored. But, those didn't provide as clean and easy to use interface for full-duplex communication between parent and child. Nor, did they provide an easy way to setup a context to run JavaScript under node which was a motivating requirement.
+
+  * In order to provide a cleaner and more reliable delivery of messages which may be sent asynchronously to the child while the connection is being estabilished and webworker handshake is taking place, a new worker to master message has been added: MSGTYPE_CLIENT_READY, which the child sents when the connection is fully estabished and the client is ready to receive messages from the master. The master in turn buffers any messages to be sent to child, and when the MSGTYPE_CLIENT_READY message is received from the client,  those buffered messages are transmitted.
+
 ### Example
 
 #### Master source
